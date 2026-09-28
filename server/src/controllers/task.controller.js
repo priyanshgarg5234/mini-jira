@@ -8,7 +8,7 @@ import {
   visibleProjectIds,
 } from '../services/access.service.js';
 import { diffTask, logActivity, taskHistory } from '../services/activity.service.js';
-import { notifyStatusChanged, notifyTaskAssigned } from '../services/email.service.js';
+import { deliver, notifyStatusChanged, notifyTaskAssigned } from '../services/email.service.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { assertValidDueDate, dueDateToISO, isoToDueDate, todayISO } from '../utils/dates.js';
@@ -99,7 +99,7 @@ export const createTask = asyncHandler(async (req, res) => {
   await task.populate(POPULATE);
 
   req.log.info({ taskId: String(task._id), key: task.key }, 'Task created');
-  if (task.assignee) notifyTaskAssigned({ task, assignee: task.assignee, actor: req.user });
+  if (task.assignee) await deliver(notifyTaskAssigned({ task, assignee: task.assignee, actor: req.user }));
   res.status(201).json({ task });
 });
 
@@ -154,9 +154,9 @@ export const updateTask = asyncHandler(async (req, res) => {
   await task.populate(POPULATE);
 
   req.log.info({ taskId: String(task._id), fields: Object.keys(req.body) }, 'Task updated');
-  if (assigneeChanged && task.assignee) notifyTaskAssigned({ task, assignee: task.assignee, actor: req.user });
+  if (assigneeChanged && task.assignee) await deliver(notifyTaskAssigned({ task, assignee: task.assignee, actor: req.user }));
   if (updates.status && updates.status !== previousStatus) {
-    notifyStatusChanged({ task, reporter: task.reporter, actor: req.user, from: previousStatus, to: task.status });
+    await deliver(notifyStatusChanged({ task, reporter: task.reporter, actor: req.user, from: previousStatus, to: task.status }));
   }
 
   res.json({ task, permissions: permissionsFor(task, req.user) });

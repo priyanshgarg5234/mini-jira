@@ -2,8 +2,19 @@ import rateLimit from 'express-rate-limit';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 
+/**
+ * Real client IP. On Vercel the request passes through Vercel's proxy (and the
+ * frontend's /api rewrite), so prefer the headers Vercel sets itself.
+ */
+const clientIp = (req) =>
+  req.headers['x-vercel-forwarded-for']?.split(',')[0].trim() ||
+  req.headers['x-real-ip'] ||
+  req.ip;
+
 const limiter = (windowMinutes, limit, message) =>
   rateLimit({
+    keyGenerator: clientIp,
+    validate: false, // proxy-header checks don't apply to our custom key
     windowMs: windowMinutes * 60 * 1000,
     limit,
     standardHeaders: 'draft-7',

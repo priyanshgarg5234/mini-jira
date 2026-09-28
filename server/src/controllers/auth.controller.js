@@ -55,7 +55,7 @@ export const login = asyncHandler(async (req, res) => {
       }
       await user.save();
     }
-    req.log.info({ email }, 'Login failed');
+    req.log.info({ email, ip: req.headers['x-vercel-forwarded-for'] || req.ip }, 'Login failed');
     throw ApiError.unauthorized('Email or password is incorrect');
   }
 

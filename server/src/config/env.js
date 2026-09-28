@@ -14,6 +14,9 @@ export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV || 'development',
   isProd,
   isTest,
+  // Vercel sets VERCEL=1. Serverless functions can freeze after responding,
+  // so background work (emails) must finish before the response is sent.
+  isServerless: Boolean(process.env.VERCEL),
   port: Number(process.env.PORT) || 5000,
   mongoUri: process.env.MONGO_URI,
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',

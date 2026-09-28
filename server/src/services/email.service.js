@@ -24,13 +24,20 @@ async function send({ to, subject, text, html }) {
   }
 }
 
+/**
+ * Locally, emails are sent in the background so requests stay fast.
+ * On Vercel the function may be frozen right after responding, so we wait.
+ * send() never throws, so awaiting it can't fail the request.
+ */
+export const deliver = (promise) => (env.isServerless ? promise : undefined);
+
 const taskUrl = (task) => `${env.clientUrl}/tasks/${task._id}`;
 
 /** To the assignee when a task is assigned to them (skipped if they assigned themselves). */
 export function notifyTaskAssigned({ task, assignee, actor }) {
   if (!assignee?.email || String(assignee._id) === String(actor._id)) return;
   const title = escapeHtml(task.title);
-  send({
+  return send({
     to: assignee.email,
     subject: `[${task.key}] Assigned to you: ${task.title}`,
     text: `${actor.name} assigned ${task.key} to you.\n\n${task.title}\nPriority: ${task.priority}\n${
@@ -46,7 +53,7 @@ export function notifyTaskAssigned({ task, assignee, actor }) {
 /** To the task creator when the status changes (skipped if they changed it themselves). */
 export function notifyStatusChanged({ task, reporter, actor, from, to }) {
   if (!reporter?.email || String(reporter._id) === String(actor._id)) return;
-  send({
+  return send({
     to: reporter.email,
     subject: `[${task.key}] Status changed to ${STATUS_LABEL[to]}`,
     text: `${actor.name} changed ${task.key} from ${STATUS_LABEL[from]} to ${STATUS_LABEL[to]}.\n\n${task.title}\n${taskUrl(task)}`,

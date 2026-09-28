@@ -4,6 +4,8 @@ Projects, teams and tasks with comments, change history, secure JWT authenticati
 
 **Stack:** React 18 (Vite) · Redux Toolkit · Node.js + Express · MongoDB (Mongoose)
 
+**Deploying?** See [DEPLOY.md](DEPLOY.md) for GitHub + Vercel steps.
+
 ## Requirements
 
 - Node.js 18.18 or newer
